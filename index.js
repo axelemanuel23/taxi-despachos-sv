@@ -22,6 +22,10 @@ const Stats = mongoose.model("Stats", {
   despachos: Number,
 });
 
+app.get("/", async (req, res) => {
+  res.json("Conectado correctamente");
+});
+
 app.get("/taxis", async (req, res) => {
   const taxis = await Taxi.find();
   res.json(taxis);
