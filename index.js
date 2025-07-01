@@ -1,3 +1,5 @@
+// Archivo: sv.js
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -16,6 +18,7 @@ const Taxi = mongoose.model("Taxi", {
   estado: String,
   TB: Boolean,
   orden: Number,
+  parada: String, // ← este campo es indispensable
 });
 
 const Stats = mongoose.model("Stats", {
@@ -32,9 +35,31 @@ app.get("/taxis", async (req, res) => {
 });
 
 app.post("/taxis", async (req, res) => {
-  const nuevoTaxi = new Taxi(req.body);
-  await nuevoTaxi.save();
-  res.json(nuevoTaxi);
+  const { id } = req.body;
+
+  try {
+    const taxiExistente = await Taxi.findOne({ id });
+    if (taxiExistente) {
+      return res.status(400).json({ mensaje: "El taxi ya existe en la base de datos." });
+    }
+    const nuevoTaxi = new Taxi({ ...req.body, parada: "aeropuerto" });
+    await nuevoTaxi.save();
+    res.status(201).json(nuevoTaxi);
+  } catch (error) {
+    console.error("Error al guardar taxi:", error);
+    res.status(500).json({ mensaje: "Error del servidor al guardar el taxi." });
+  }
+});
+
+app.post("/stats/reset", async (req, res) => {
+  let stats = await Stats.findOne();
+  if (!stats) {
+    stats = new Stats({ despachos: 0 });
+  } else {
+    stats.despachos = 0;
+  }
+  await stats.save();
+  res.json(stats);
 });
 
 app.put("/taxis/:id", async (req, res) => {
